@@ -50,9 +50,6 @@ public class Client implements UserDetails {
         return List.of(() -> "ROLE_" + role.name());  // Add "ROLE_" prefix
     }
 
-
-
-
     @Override
     public String getPassword() {
         return passwordHash;

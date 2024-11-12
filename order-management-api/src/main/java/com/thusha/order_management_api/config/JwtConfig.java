@@ -32,11 +32,15 @@ public class JwtConfig {
     public String generateToken(Client client) {
         return Jwts.builder()
                 .setSubject(client.getUsername())  // Set the email as the token's subject
-                .claim("role", client.getRole().name())
+                .claim("role", client.getRole())
                 .setIssuedAt(new Date())  // Set the issued time
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))  // Set expiration time
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)  // Sign with the secret key
                 .compact();  // Build the token
+    }
+
+    public String extractSingleRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     public String getUserCategoryFromToken(String token) {
