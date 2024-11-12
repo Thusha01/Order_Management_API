@@ -12,6 +12,7 @@ public class UserDetailsServiceImp implements UserDetailsService {
 
     private final ClientRepository clientRepository;
 
+
     public UserDetailsServiceImp(ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
     }

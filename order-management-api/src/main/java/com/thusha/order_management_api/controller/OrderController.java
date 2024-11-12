@@ -4,6 +4,7 @@ import com.thusha.order_management_api.config.JwtConfig;
 import com.thusha.order_management_api.dto.PlaceOrderDto;
 import com.thusha.order_management_api.model.Client;
 import com.thusha.order_management_api.model.Order;
+import com.thusha.order_management_api.model.OrderStatus;
 import com.thusha.order_management_api.service.ClientService;
 import com.thusha.order_management_api.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class OrderController {
     @Autowired
     private JwtConfig jwtConfig;
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAuthority('CLIENT')")
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(@RequestBody PlaceOrderDto orderRequest, Authentication authentication) {
         String email = authentication.getName();
@@ -46,44 +47,56 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAuthority('CLIENT')")
     @PostMapping("/cancel/{referenceNumber}")
     public ResponseEntity<?> cancelOrder(@PathVariable String referenceNumber, Authentication authentication) {
         String email = authentication.getName();
-        Optional<Client>  clientOptional= clientService.getClientByEmail(email);
-        if(clientOptional.isEmpty()){
+        Optional<Client> clientOptional = clientService.getClientByEmail(email);
+
+        if (clientOptional.isEmpty()) {
             return ResponseEntity.status(404).body("Client not found");
         }
 
         Client client = clientOptional.get();
         Optional<Order> orderOptional = orderService.findOrderByReferenceNUmber(referenceNumber, client);
-        if(orderOptional.isEmpty()){
+
+        if (orderOptional.isEmpty()) {
             return ResponseEntity.status(404).body("Order not found");
         }
 
         Order order = orderOptional.get();
-        if(!"NEW".equals(order.getStatus())){
-            return ResponseEntity.status(403).body("Order cannot be canceled. It is already "+ order.getStatus());
+
+
+        if (OrderStatus.NEW.equals(order.getStatus())) {
+            orderService.cancelOrder(order);
+            return ResponseEntity.ok("Order canceled successfully");
         }
 
-        orderService.cancelOrder(order);
-            return ResponseEntity.ok("Order canceled successfully");
 
-
+        String currentStatus = order.getStatus().name();
+        return ResponseEntity.status(403).body("Order cannot be canceled. It is already " + currentStatus);
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAuthority('CLIENT')")
     @GetMapping("/history")
-    public ResponseEntity<Page<Order>> getOrderHistory(@RequestParam int page, @RequestParam int size, Authentication authentication){
+    public ResponseEntity<?> getOrderHistory(@RequestParam int page, @RequestParam int size, Authentication authentication) {
+
+        System.out.println("Authentication details: " + authentication);
+
         String email = authentication.getName();
-        Optional<Client> clientOptional= clientService.getClientByEmail(email);
-        if(clientOptional.isEmpty()){
-            return ResponseEntity.status(404).body(null);
+        Optional<Client> clientOptional = clientService.getClientByEmail(email);
+
+        if (clientOptional.isEmpty()) {
+            return ResponseEntity.status(404).body("Client not found");
         }
 
         Client client = clientOptional.get();
         Pageable pageable = PageRequest.of(page, size);
-        Page<Order> orders= orderService.getOrderHistory(client, pageable);
+        Page<Order> orders = orderService.getOrderHistory(client, pageable);
+
+        if (orders.isEmpty()) {
+            return ResponseEntity.ok("No order history available.");
+        }
 
         return ResponseEntity.ok(orders);
     }

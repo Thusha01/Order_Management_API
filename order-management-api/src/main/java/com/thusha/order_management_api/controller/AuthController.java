@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import com.thusha.order_management_api.service.AuthService;
 
 
 @RestController
@@ -26,8 +28,6 @@ public class AuthController {
     @Autowired
     private JwtConfig jwtConfig;
 
-    @Autowired
-    private AuthService authService;
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupDto signupRequest) {
@@ -39,10 +39,20 @@ public class AuthController {
         }
     }
 
+
     @PostMapping("/signin")
-    public ResponseEntity<AuthResponseDto> authenticateUser(@RequestBody LoginDto loginRequest) {
-        // Use AuthService to authenticate and generate the JWT
-        AuthResponseDto authResponse = authService.signin(loginRequest);
-        return ResponseEntity.ok(authResponse);
+    public AuthResponseDto AuthenticateAndGetToken(@RequestBody LoginDto authRequestDTO) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authRequestDTO.getEmail(), authRequestDTO.getPassword())
+        );
+
+        if (authentication.isAuthenticated()) {
+            return AuthResponseDto.builder()
+                    .token(jwtConfig.generateToken(authRequestDTO.getEmail()))
+                    .build();
+        } else {
+            throw new UsernameNotFoundException("Invalid user request..!!");
+        }
     }
+
 }
