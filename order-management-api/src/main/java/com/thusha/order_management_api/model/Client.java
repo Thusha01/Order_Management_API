@@ -37,14 +37,21 @@ public class Client implements UserDetails {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt= LocalDateTime.now();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @OneToMany(mappedBy = "client", cascade= CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return List.of(() -> "ROLE_" + role.name());  // Add "ROLE_" prefix
     }
+
+
+
 
     @Override
     public String getPassword() {

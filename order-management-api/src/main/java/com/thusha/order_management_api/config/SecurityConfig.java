@@ -44,7 +44,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req
                         .requestMatchers("/api/auth/**").permitAll() // Allow login and register to be accessed without auth
-                        .requestMatchers("/api/orders/**").authenticated()
+                        .requestMatchers("/api/orders/place", "/api/orders/cancel/**", "/api/orders/history").hasRole("CLIENT")
                         .anyRequest().authenticated() // All other requests require authentication
                 )
                 .userDetailsService(userDetailsServiceImp)

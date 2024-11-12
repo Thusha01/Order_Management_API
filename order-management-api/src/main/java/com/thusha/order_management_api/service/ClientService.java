@@ -1,11 +1,9 @@
 package com.thusha.order_management_api.service;
 
 import com.thusha.order_management_api.config.JwtConfig;
-import com.thusha.order_management_api.dto.AuthResponseDto;
-import com.thusha.order_management_api.dto.LoginDto;
 import com.thusha.order_management_api.dto.SignupDto;
-import com.thusha.order_management_api.exception.AuthenticationException;
 import com.thusha.order_management_api.model.Client;
+import com.thusha.order_management_api.model.Role;
 import com.thusha.order_management_api.repository.ClientRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +40,7 @@ public class ClientService {
         client.setPasswordHash(hashPassword);
         client.setFirstName(request.getFirstName());
         client.setLastName(request.getLastName());
+        client.setRole(Role.CLIENT);
 
         clientRepository.save(client);
     }

@@ -1,5 +1,6 @@
 package com.thusha.order_management_api.config;
 
+import com.thusha.order_management_api.model.Client;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -28,13 +29,22 @@ public class JwtConfig {
     }
 
     // Generate JWT token using email as subject (for login)
-    public String generateToken(String email) {
+    public String generateToken(Client client) {
         return Jwts.builder()
-                .setSubject(email)  // Set the email as the token's subject
+                .setSubject(client.getUsername())  // Set the email as the token's subject
+                .claim("role", client.getRole().name())
                 .setIssuedAt(new Date())  // Set the issued time
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))  // Set expiration time
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)  // Sign with the secret key
                 .compact();  // Build the token
+    }
+
+    public String getUserCategoryFromToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(SECRET_KEY)
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role", String.class);
     }
 
     public String getEmailFromToken(String token) {
@@ -73,8 +83,8 @@ public class JwtConfig {
 
     // Validate the token against user details
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        String emailFromToken = extractUsername(token);
+        return (emailFromToken.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     // Validate the token without user details (for general validation)

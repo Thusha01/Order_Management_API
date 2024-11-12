@@ -9,6 +9,7 @@ import com.thusha.order_management_api.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,9 +30,10 @@ public class OrderController {
     @Autowired
     private JwtConfig jwtConfig;
 
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(@RequestBody PlaceOrderDto orderRequest, Authentication authentication) {
-        String email = jwtConfig.getEmailFromToken(authentication.getName());
+        String email = authentication.getName();
         Optional<Client> clientOptional= clientService.getClientByEmail(email);
 
         if (clientOptional.isEmpty()){
@@ -44,10 +46,10 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
-
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/cancel/{referenceNumber}")
     public ResponseEntity<?> cancelOrder(@PathVariable String referenceNumber, Authentication authentication) {
-        String email = jwtConfig.getEmailFromToken(authentication.getName());
+        String email = authentication.getName();
         Optional<Client>  clientOptional= clientService.getClientByEmail(email);
         if(clientOptional.isEmpty()){
             return ResponseEntity.status(404).body("Client not found");
@@ -70,16 +72,17 @@ public class OrderController {
 
     }
 
+    @PreAuthorize("hasRole('CLIENT')")
     @GetMapping("/history")
     public ResponseEntity<Page<Order>> getOrderHistory(@RequestParam int page, @RequestParam int size, Authentication authentication){
-        String email = jwtConfig.getEmailFromToken(authentication.getName());
+        String email = authentication.getName();
         Optional<Client> clientOptional= clientService.getClientByEmail(email);
         if(clientOptional.isEmpty()){
             return ResponseEntity.status(404).body(null);
         }
 
         Client client = clientOptional.get();
-        Pageable pageable= (Pageable) PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size);
         Page<Order> orders= orderService.getOrderHistory(client, pageable);
 
         return ResponseEntity.ok(orders);

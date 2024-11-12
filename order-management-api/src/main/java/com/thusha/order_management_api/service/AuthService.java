@@ -34,7 +34,7 @@ public class AuthService {
         }
 
         // Generate the JWT token
-        String token = jwtConfig.generateToken(client.getEmail());
+        String token = jwtConfig.generateToken(client);
         return new AuthResponseDto(token);  // Return the token in a response DTO
     }
 
